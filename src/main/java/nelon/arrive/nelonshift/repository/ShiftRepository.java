@@ -1,12 +1,12 @@
 package nelon.arrive.nelonshift.repository;
 
 import nelon.arrive.nelonshift.entity.Shift;
-import org.hibernate.query.Page;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.awt.print.Pageable;
 import java.time.LocalDate;
 
 public interface ShiftRepository extends JpaRepository<Shift, Long> {
