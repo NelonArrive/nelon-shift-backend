@@ -11,9 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-	Page<Project> findByNameContainingIgnoreCase(String name, Pageable pageable);
-	
-	Page<Project> findByStatus(ProjectStatus status, Pageable pageable);
+	boolean existsByName(String name);
 	
 	@Query("SELECT p FROM Project p WHERE " +
 		"(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +

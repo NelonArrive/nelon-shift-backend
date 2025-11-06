@@ -5,6 +5,9 @@ import nelon.arrive.nelonshift.dto.PageResponse;
 import nelon.arrive.nelonshift.dto.ProjectDTO;
 import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Project.ProjectStatus;
+import nelon.arrive.nelonshift.exception.AlreadyExistsException;
+import nelon.arrive.nelonshift.exception.BadRequestException;
+import nelon.arrive.nelonshift.exception.ResourceNotFoundException;
 import nelon.arrive.nelonshift.repository.ProjectRepository;
 import nelon.arrive.nelonshift.service.interfaces.IProjectService;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,17 @@ public class ProjectService implements IProjectService {
 		String sortBy,
 		String sortDirection
 	) {
+		if (page < 0) {
+			throw new BadRequestException("Page number cannot be negative");
+		}
+		if (size <= 0 || size > 100) {
+			throw new BadRequestException("Page size must be between 1 and 100");
+		}
+		
+		if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+			throw new BadRequestException("Start date cannot be after end date");
+		}
+		
 		Sort sort = sortDirection.equalsIgnoreCase("desc")
 			? Sort.by(sortBy).descending()
 			: Sort.by(sortBy).ascending();
@@ -49,12 +63,27 @@ public class ProjectService implements IProjectService {
 	@Transactional(readOnly = true)
 	public ProjectDTO getProjectById(Long id) {
 		Project project = projectRepository.findById(id)
-			.orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 		return new ProjectDTO(project);
 	}
 	
 	@Transactional
 	public ProjectDTO createProject(Project project) {
+		if (project.getName() == null || project.getName().trim().isEmpty()) {
+			throw new BadRequestException("Project name cannot be empty");
+		}
+		
+		boolean exists = projectRepository.existsByName(project.getName());
+		if (exists) {
+			throw new AlreadyExistsException("Already exist project by name");
+		}
+		
+		if (project.getStartDate() != null && project.getEndDate() != null) {
+			if (project.getStartDate().isAfter(project.getEndDate())) {
+				throw new BadRequestException("Start date cannot be after end date");
+			}
+		}
+		
 		Project savedProject = projectRepository.save(project);
 		return new ProjectDTO(savedProject);
 	}
@@ -62,12 +91,30 @@ public class ProjectService implements IProjectService {
 	@Transactional
 	public ProjectDTO updateProject(Long id, Project projectDetails) {
 		Project project = projectRepository.findById(id)
-			.orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 		
-		project.setName(projectDetails.getName());
-		project.setStatus(projectDetails.getStatus());
-		project.setStartDate(projectDetails.getStartDate());
-		project.setEndDate(projectDetails.getEndDate());
+		if (projectDetails.getName() != null && projectDetails.getName().trim().isEmpty()) {
+			throw new BadRequestException("Project name cannot be empty");
+		}
+		
+		if (projectDetails.getStartDate() != null && projectDetails.getEndDate() != null) {
+			if (projectDetails.getStartDate().isAfter(projectDetails.getEndDate())) {
+				throw new BadRequestException("Start date cannot be after end date");
+			}
+		}
+		
+		if (projectDetails.getName() != null) {
+			project.setName(projectDetails.getName());
+		}
+		if (projectDetails.getStatus() != null) {
+			project.setStatus(projectDetails.getStatus());
+		}
+		if (projectDetails.getStartDate() != null) {
+			project.setStartDate(projectDetails.getStartDate());
+		}
+		if (projectDetails.getEndDate() != null) {
+			project.setEndDate(projectDetails.getEndDate());
+		}
 		
 		Project updatedProject = projectRepository.save(project);
 		return new ProjectDTO(updatedProject);
@@ -75,9 +122,15 @@ public class ProjectService implements IProjectService {
 	
 	@Transactional
 	public void deleteProject(Long id) {
-		if (!projectRepository.existsById(id)) {
-			throw new RuntimeException("Project not found with id: " + id);
+		Project project = projectRepository.findById(id)
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+		
+		if (!project.getShifts().isEmpty()) {
+			throw new BadRequestException(
+				"Cannot delete project with existing shifts. Delete shifts first."
+			);
 		}
+		
 		projectRepository.deleteById(id);
 	}
 }
