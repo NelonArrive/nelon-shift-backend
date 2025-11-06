@@ -1,13 +1,28 @@
 package nelon.arrive.nelonshift.service.interfaces;
 
+import nelon.arrive.nelonshift.dto.PageResponse;
+import nelon.arrive.nelonshift.dto.ShiftDTO;
 import nelon.arrive.nelonshift.entity.Shift;
 
+import java.time.LocalDate;
+
 public interface IShiftService {
-	Shift getByProject(Long projectId);
+	public PageResponse<ShiftDTO> getShifts(
+		Long projectId,
+		LocalDate startDate,
+		LocalDate endDate,
+		Integer minHours,
+		int page,
+		int size,
+		String sortBy,
+		String sortDirection
+	);
 	
-	Shift create(Long projectId, Shift shift);
+	ShiftDTO getShiftById(Long id);
 	
-	Shift update(Long projectId, Shift shift);
+	ShiftDTO createShift(Long projectId, Shift shift);
 	
-	void delete(Long id);
+	ShiftDTO updateShift(Long id, Shift shiftDetails);
+	
+	void deleteShift(Long id);
 }

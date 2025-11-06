@@ -1,13 +1,14 @@
 package nelon.arrive.nelonshift.service.interfaces;
 
+import nelon.arrive.nelonshift.dto.PageResponse;
+import nelon.arrive.nelonshift.dto.ProjectDTO;
 import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Project.ProjectStatus;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface IProjectService {
-	List<Project> getProjects(
+	PageResponse<ProjectDTO> getProjects(
 		String name,
 		ProjectStatus status,
 		LocalDate startDate,
@@ -18,11 +19,11 @@ public interface IProjectService {
 		String sortDirection
 	);
 	
-	Project getProjectById(Long id);
+	ProjectDTO getProjectById(Long id);
 	
-	Project createProject(Project project);
+	ProjectDTO createProject(Project project);
 	
-	Project updateProject(Long id, Project projectDetails);
+	ProjectDTO updateProject(Long id, Project projectDetails);
 	
 	void deleteProject(Long id);
 }
