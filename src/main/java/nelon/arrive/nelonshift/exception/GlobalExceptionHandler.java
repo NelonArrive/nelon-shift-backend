@@ -13,12 +13,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Глобальный обработчик всех исключений в приложении
- * Автоматически перехватывает все ошибки и возвращает красивый JSON
- *
- * @RestControllerAdvice - аннотация говорит Spring'у: "Эй, обрабатывай тут все исключения!"
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -60,7 +54,7 @@ public class GlobalExceptionHandler {
 			.error(ex.getStatus().getReasonPhrase())
 			.message(ex.getMessage())
 			.path(request.getRequestURI())
-			.errors(ex.getErrors()) // Карта ошибок по полям
+			.errors(ex.getErrors())
 			.build();
 		
 		return ResponseEntity.status(ex.getStatus()).body(errorResponse);

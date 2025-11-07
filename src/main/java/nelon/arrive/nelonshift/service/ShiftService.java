@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nelon.arrive.nelonshift.dto.ShiftDTO;
 import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Shift;
-import nelon.arrive.nelonshift.exception.ResourceNotFoundException;
-import nelon.arrive.nelonshift.exception.ValidationException;
+import nelon.arrive.nelonshift.exception.*;
 import nelon.arrive.nelonshift.repository.ProjectRepository;
 import nelon.arrive.nelonshift.repository.ShiftRepository;
 import nelon.arrive.nelonshift.service.interfaces.IShiftService;
@@ -60,13 +59,13 @@ public class ShiftService implements IShiftService {
 			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 		
 		if (project.getStatus() == Project.ProjectStatus.CANCELLED) {
-			throw new RuntimeException("Cannot create shift for cancelled project");
+			throw new BadRequestException("Cannot create shift for cancelled project");
 		}
 		
 		validateShiftDateAgainstProject(shift.getDate(), project);
 		
 		if (shiftRepository.existsByProjectIdAndDate(projectId, shift.getDate())) {
-			throw new RuntimeException("Shift already exists for this project on date: " + shift.getDate());
+			throw new AlreadyExistsException("Shift already exists for this project on date: " + shift.getDate());
 		}
 		
 		shift.setProject(project);
@@ -87,12 +86,12 @@ public class ShiftService implements IShiftService {
 			.orElseThrow(() -> new ResourceNotFoundException("Shift not found with id: " + id));
 		
 		if (shift.getProject().getStatus() == Project.ProjectStatus.COMPLETED) {
-			throw new RuntimeException("Cannot update shift for completed project");
+			throw new BadRequestException("Cannot update shift for completed project");
 		}
 		
 		if (!shift.getDate().equals(shiftDetails.getDate())) {
 			if (shiftRepository.existsByProjectIdAndDate(shift.getProject().getId(), shiftDetails.getDate())) {
-				throw new RuntimeException("Shift already exists for this project on date: " + shiftDetails.getDate());
+				throw new AlreadyExistsException("Shift already exists for this project on date: " + shiftDetails.getDate());
 			}
 			
 			validateShiftDateAgainstProject(shiftDetails.getDate(), shift.getProject());
@@ -122,7 +121,7 @@ public class ShiftService implements IShiftService {
 			.orElseThrow(() -> new ResourceNotFoundException("Shift not found with id: " + id));
 		
 		if (shift.getProject().getStatus() == Project.ProjectStatus.COMPLETED) {
-			throw new RuntimeException("Cannot delete shift from completed project");
+			throw new BadRequestException("Cannot delete shift from completed project");
 		}
 		
 		shiftRepository.deleteById(id);
@@ -195,11 +194,11 @@ public class ShiftService implements IShiftService {
 	
 	private void validateShiftDateAgainstProject(LocalDate shiftDate, Project project) {
 		if (project.getStartDate() != null && shiftDate.isBefore(project.getStartDate())) {
-			throw new RuntimeException("Shift date cannot be before project start date");
+			throw new BadRequestException("Shift date cannot be before project start date");
 		}
 		
 		if (project.getEndDate() != null && shiftDate.isAfter(project.getEndDate())) {
-			throw new RuntimeException("Shift date cannot be after project end date");
+			throw new BadRequestException("Shift date cannot be after project end date");
 		}
 	}
 	

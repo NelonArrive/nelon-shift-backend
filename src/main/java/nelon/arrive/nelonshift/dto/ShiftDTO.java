@@ -23,7 +23,7 @@ public class ShiftDTO {
 	private Integer hours;
 	private BigDecimal basePay;
 	private Integer overtimeHours;
-	private BigDecimal overtimePay;
+	// private BigDecimal overtimePay;
 	private BigDecimal perDiem;
 	private BigDecimal totalPay;
 	private LocalDateTime createdAt;
@@ -39,7 +39,7 @@ public class ShiftDTO {
 		this.hours = shift.getHours();
 		this.basePay = shift.getBasePay();
 		this.overtimeHours = shift.getOvertimeHours();
-		this.overtimePay = shift.getOvertimePay();
+		// this.overtimePay = shift.getOvertimePay();
 		this.perDiem = shift.getPerDiem();
 		this.totalPay = shift.getTotalPay();
 		this.createdAt = shift.getCreatedAt();

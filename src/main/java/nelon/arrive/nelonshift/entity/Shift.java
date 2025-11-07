@@ -1,6 +1,9 @@
 package nelon.arrive.nelonshift.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,18 +40,24 @@ public class Shift {
 	private LocalTime endTime;
 	
 	@Column(nullable = false)
+	@Min(value = 0, message = "Hours must be at least 0")
+	@Max(value = 24, message = "Hours cannot exceed 24")
 	private Integer hours;
 	
 	@Column(name = "base_pay", precision = 10, scale = 2)
+	@DecimalMin(value = "0.0", inclusive = true, message = "Base pay must be positive")
 	private BigDecimal basePay;
 	
 	@Column(name = "overtime_hours")
+	@Min(value = 0, message = "Overtime hours must be at least 0")
 	private Integer overtimeHours;
 	
 	@Column(name = "overtime_pay", precision = 10, scale = 2)
+	@DecimalMin(value = "0.0", inclusive = true, message = "Overtime pay must be positive")
 	private BigDecimal overtimePay;
 	
 	@Column(name = "per_diem", precision = 10, scale = 2)
+	@DecimalMin(value = "0.0", inclusive = true, message = "Per diem must be positive")
 	private BigDecimal perDiem;
 	
 	@CreationTimestamp
