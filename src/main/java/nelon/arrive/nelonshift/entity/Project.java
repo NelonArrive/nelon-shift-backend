@@ -1,6 +1,9 @@
 package nelon.arrive.nelonshift.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,9 +25,12 @@ public class Project {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(nullable = false)
+	@NotBlank(message = "Project name is required")
+	@Size(min = 2, max = 100, message = "Project name must be between 2 and 100 characters")
+	@Column(nullable = false, unique = true)
 	private String name;
 	
+	@NotNull(message = "Project status is required")
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private ProjectStatus status;
