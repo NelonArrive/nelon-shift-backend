@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("${api.prefix}/projects")
+@RequestMapping("/${api.prefix}/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 	private final ProjectService projectService;
