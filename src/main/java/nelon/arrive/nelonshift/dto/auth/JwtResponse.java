@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class JwtResponse {
+public class JwtResponse {
 	private String token;
 	private String type = "Bearer";
 	private UUID id;
