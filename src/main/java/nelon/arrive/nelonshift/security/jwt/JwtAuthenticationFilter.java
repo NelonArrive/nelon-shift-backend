@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nelon.arrive.nelonshift.services.AuthService;
+import nelon.arrive.nelonshift.security.CustomUserDetailsService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +22,8 @@ import java.io.IOException;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
-	private final AuthService authService;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final CustomUserDetailsService userDetailsService;
 	
 	@Override
 	protected void doFilterInternal(
@@ -30,18 +31,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletResponse response,
 		FilterChain filterChain
 	) throws ServletException, IOException {
+		
 		try {
-			// Извлекаем JWT из заголовка Authorization
-			String token = extractToken(request);
+			String jwt = parseJwt(request);
 			
-			// Если токен есть и он валидный
-			if (token != null) {
-				// Извлекаем email из токена
-				String email = authService.getUserEmailFromJwtToken(token);
+			if (jwt != null && jwtTokenProvider.validateToken(jwt)) {
+				String email = jwtTokenProvider.getUserEmailFromToken(jwt);
 				
-				UserDetails userDetails = authService.validateJwtToken(token);
+				UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 				
-				// Создаём объект аутентификации
 				UsernamePasswordAuthenticationToken authentication =
 					new UsernamePasswordAuthenticationToken(
 						userDetails,
@@ -52,6 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				
 				SecurityContextHolder.getContext().setAuthentication(authentication);
+				
+				log.debug("Set authentication for user: {}", email);
 			}
 		} catch (Exception e) {
 			log.error("Cannot set user authentication: {}", e.getMessage());
@@ -60,11 +60,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 	
-	private String extractToken(HttpServletRequest request) {
+	private String parseJwt(HttpServletRequest request) {
 		String headerAuth = request.getHeader("Authorization");
+		
 		if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
 			return headerAuth.substring(7);
 		}
+		
 		return null;
 	}
 }

@@ -33,13 +33,7 @@ public class User {
 	private List<Project> projects = new ArrayList<>();
 	
 	@ManyToMany(
-		fetch = FetchType.EAGER,
-		cascade = {
-			CascadeType.DETACH,
-			CascadeType.MERGE,
-			CascadeType.REFRESH,
-			CascadeType.PERSIST
-		}
+		fetch = FetchType.EAGER
 	)
 	@JoinTable(
 		name = "user_roles",

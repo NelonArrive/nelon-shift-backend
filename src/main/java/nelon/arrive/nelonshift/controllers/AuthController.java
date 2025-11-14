@@ -2,6 +2,7 @@ package nelon.arrive.nelonshift.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nelon.arrive.nelonshift.dto.auth.JwtResponse;
 import nelon.arrive.nelonshift.dto.auth.LoginRequest;
 import nelon.arrive.nelonshift.dto.auth.MessageResponse;
@@ -11,7 +12,7 @@ import nelon.arrive.nelonshift.entities.User;
 import nelon.arrive.nelonshift.repositories.RoleRepository;
 import nelon.arrive.nelonshift.repositories.UserRepository;
 import nelon.arrive.nelonshift.security.CustomUserDetails;
-import nelon.arrive.nelonshift.services.AuthService;
+import nelon.arrive.nelonshift.security.jwt.JwtTokenProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,18 +29,21 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/${api.prefix}/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 	
 	private final AuthenticationManager authenticationManager;
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final AuthService authService;
+	private final JwtTokenProvider jwtTokenProvider;
 	
 	@PostMapping("/login")
 	public ResponseEntity<?> login(
 		@Valid @RequestBody LoginRequest loginRequest
 	) {
+		log.info("Login attempt for email: {}", loginRequest.getEmail());
+		
 		Authentication authentication = authenticationManager.authenticate(
 			new UsernamePasswordAuthenticationToken(
 				loginRequest.getEmail(),
@@ -49,18 +53,20 @@ public class AuthController {
 		
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		
-		String jwt = authService.generateJwtToken(authentication);
+		String jwt = jwtTokenProvider.generateToken(authentication);
 		
-		CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-		Set<String> roles = customUserDetails.getAuthorities().stream()
+		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+		Set<String> roles = userDetails.getAuthorities().stream()
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.toSet());
 		
+		log.info("Login successful for user: {}", userDetails.getEmail());
+		
 		return ResponseEntity.ok(new JwtResponse(
 			jwt,
-			customUserDetails.getId(),
-			customUserDetails.getEmail(),
-			customUserDetails.getName(),
+			userDetails.getId(),
+			userDetails.getEmail(),
+			userDetails.getName(),
 			roles
 		));
 	}
@@ -69,6 +75,8 @@ public class AuthController {
 	public ResponseEntity<?> signup(
 		@Valid @RequestBody SignupRequest signupRequest
 	) {
+		log.info("Signup attempt for email: {}", signupRequest.getEmail());
+		
 		if (userRepository.existsByEmail(signupRequest.getEmail())) {
 			throw new IllegalArgumentException("Email already exists");
 		}
@@ -102,17 +110,17 @@ public class AuthController {
 	@GetMapping("/me")
 	public ResponseEntity<?> getCurrentUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 		
-		Set<String> roles = customUserDetails.getAuthorities().stream()
+		Set<String> roles = userDetails.getAuthorities().stream()
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.toSet());
 		
 		return ResponseEntity.ok(new JwtResponse(
 			null,
-			customUserDetails.getId(),
-			customUserDetails.getEmail(),
-			customUserDetails.getName(),
+			userDetails.getId(),
+			userDetails.getEmail(),
+			userDetails.getName(),
 			roles
 		));
 	}
