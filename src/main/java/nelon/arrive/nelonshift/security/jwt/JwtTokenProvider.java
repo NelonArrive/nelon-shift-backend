@@ -23,7 +23,7 @@ public class JwtTokenProvider {
 	@Value("${jwt.secret}")
 	private String jwtSecret;
 	
-	@Value("${jwt.expiration}")
+	@Value("${jwt.access-token-expiration}")
 	private Long jwtExpirationMs;
 	
 	public String generateToken(Authentication authentication) {
@@ -65,6 +65,18 @@ public class JwtTokenProvider {
 			log.error("JWT validation failed: {}", e.getMessage());
 		}
 		return false;
+	}
+	
+	public String generateTokenFromEmail(String email) {
+		Date now = new Date();
+		Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+		
+		return Jwts.builder()
+			.setSubject(email)
+			.setIssuedAt(now)
+			.setExpiration(expiryDate)
+			.signWith(getSigningKey(), SignatureAlgorithm.HS512)
+			.compact();
 	}
 	
 	private SecretKey getSigningKey() {

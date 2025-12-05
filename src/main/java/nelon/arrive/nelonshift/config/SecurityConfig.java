@@ -61,8 +61,12 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, "/api/v1/projects/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/shifts/**").permitAll()
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+				
+				.requestMatchers("/me").authenticated()
+				
 				.anyRequest().authenticated()
 			)
+			
 			// OAuth2 Login
 			.oauth2Login(oauth2 -> oauth2
 				.userInfoEndpoint(userInfo -> userInfo

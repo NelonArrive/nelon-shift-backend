@@ -5,19 +5,30 @@ import nelon.arrive.nelonshift.dto.PageResponse;
 import nelon.arrive.nelonshift.dto.ProjectDTO;
 import nelon.arrive.nelonshift.entities.Project;
 import nelon.arrive.nelonshift.entities.Project.ProjectStatus;
+import nelon.arrive.nelonshift.entities.Shift;
+import nelon.arrive.nelonshift.repositories.ProjectRepository;
+import nelon.arrive.nelonshift.services.ProjectExcelExportService;
 import nelon.arrive.nelonshift.services.ProjectService;
+import nelon.arrive.nelonshift.services.ShiftService;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/${api.prefix}/projects")
 @RequiredArgsConstructor
 public class ProjectController {
+	private final ShiftService shiftService;
 	private final ProjectService projectService;
+	private final ProjectExcelExportService projectExcelExportService;
 	
 	@GetMapping
 	public ResponseEntity<PageResponse<ProjectDTO>> getProjects(
@@ -64,8 +75,23 @@ public class ProjectController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteProject(
 		@PathVariable Long id
-	){
+	) {
 		projectService.deleteProject(id);
 		return ResponseEntity.noContent().build();
+	}
+	
+	@GetMapping("/{id}/export")
+	public ResponseEntity<InputStreamResource> exportProject(
+		@PathVariable Long id
+	) throws IOException {
+		ByteArrayInputStream stream = projectExcelExportService.exportProject(
+			projectService.getProjectById(id),
+			shiftService.getShiftsByProjectId(id)
+		);
+		
+		return ResponseEntity.ok()
+			.header("Content-Disposition", "attachment; filename=project.xlsx")
+			.contentType(MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+			.body(new InputStreamResource(stream));
 	}
 }

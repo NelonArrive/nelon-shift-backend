@@ -1,0 +1,47 @@
+Agile approach, todo:
+
+[] - Полноценную систему Refresh Token
+  [] - Хранить refresh токены (в БД или Redis)
+  [] - Endpoint для обновления токенов
+  [] - Логика ротации refresh токенов
+[] - Redis интеграцию
+  [] - Кэш для часто запрашиваемых данных (пользователи, роли)
+  [] - Хранение refresh токенов (TTL)
+  [] - Rate limiting
+  [] - Blacklist для отозванных JWT токенов
+[] - Other auth
+  [] - Email verification
+  [] - Forgot password
+  [] - Remember me
+  [] - Two-Factor Authentication (2FA) (enable, disable)
+  [] - Phone number: code (XXXX)
+  [] - logout
+  [] - logout-all
+  [] - sessions
+[] - Глобальный обработчик исключений
+  [] - @RestControllerAdvice для глобальной обработки
+  [] - Кастомные исключения (UserNotFoundException, etc.)
+  [] - Стандартизированные ответы об ошибках
+[] - Rate Limiting
+  [] - Защита от брутфорса и DDoS:
+  [] - На эндпоинты /login и /signup
+  [] - Bucket4j + Redis или Spring Rate Limiter
+[] - Аудит и логирование
+  [] - Логирование всех попыток входа
+  [] - Аудит действий пользователей
+  [] - ELK Stack интеграция
+[] - Kafka (опционально)
+  [] - Отправка email уведомлений
+  [] - Аудит логи
+  [] - Event-driven архитектура
+[] - Security improvements
+  [] - HTTPS only в проде
+  [] - Защита от CSRF
+  [] - Content Security Policy
+  [] - Helmet-подобные заголовки
+  [] - Валидация входных данных
+[] - Profile
+  [] - написать CRUD для profile
+  [] - Avatar CRUD & upload
+  [] - firstName, lastName, password, email, birthDay?,
+[] - Export to Excel

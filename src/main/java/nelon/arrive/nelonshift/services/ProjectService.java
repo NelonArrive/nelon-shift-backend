@@ -12,6 +12,10 @@ import nelon.arrive.nelonshift.exceptions.BusinessLogicException;
 import nelon.arrive.nelonshift.exceptions.ResourceNotFoundException;
 import nelon.arrive.nelonshift.repositories.ProjectRepository;
 import nelon.arrive.nelonshift.services.interfaces.IProjectService;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -184,7 +190,6 @@ public class ProjectService implements IProjectService {
 		return new ProjectDTO(updatedProject);
 	}
 	
-	@Transactional
 	public void deleteProject(Long id) {
 		Project project = projectRepository.findById(id)
 			.orElseThrow(
