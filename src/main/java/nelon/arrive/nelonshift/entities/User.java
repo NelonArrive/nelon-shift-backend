@@ -5,7 +5,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -31,17 +34,6 @@ public class User {
 	
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Project> projects = new ArrayList<>();
-	
-	@ManyToMany(
-		fetch = FetchType.EAGER
-	)
-	@JoinTable(
-		name = "user_roles",
-		joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-		inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName =
-			"id")
-	)
-	private Collection<Role> roles = new HashSet<>();
 	
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)

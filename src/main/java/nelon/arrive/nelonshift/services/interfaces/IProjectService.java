@@ -1,9 +1,9 @@
 package nelon.arrive.nelonshift.services.interfaces;
 
-import nelon.arrive.nelonshift.dto.PageResponse;
-import nelon.arrive.nelonshift.dto.ProjectDTO;
+import nelon.arrive.nelonshift.dtos.ProjectDTO;
 import nelon.arrive.nelonshift.entities.Project;
 import nelon.arrive.nelonshift.entities.Project.ProjectStatus;
+import nelon.arrive.nelonshift.response.PageResponse;
 
 import java.time.LocalDate;
 

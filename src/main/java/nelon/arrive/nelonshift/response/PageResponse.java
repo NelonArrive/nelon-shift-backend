@@ -1,4 +1,4 @@
-package nelon.arrive.nelonshift.dto;
+package nelon.arrive.nelonshift.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

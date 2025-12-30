@@ -2,7 +2,7 @@ package nelon.arrive.nelonshift.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nelon.arrive.nelonshift.dto.ShiftDTO;
+import nelon.arrive.nelonshift.dtos.ShiftDTO;
 import nelon.arrive.nelonshift.entities.Project;
 import nelon.arrive.nelonshift.entities.Shift;
 import nelon.arrive.nelonshift.exceptions.AlreadyExistsException;

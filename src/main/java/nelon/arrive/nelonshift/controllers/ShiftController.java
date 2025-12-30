@@ -2,7 +2,7 @@ package nelon.arrive.nelonshift.controllers;
 
 
 import lombok.RequiredArgsConstructor;
-import nelon.arrive.nelonshift.dto.ShiftDTO;
+import nelon.arrive.nelonshift.dtos.ShiftDTO;
 import nelon.arrive.nelonshift.entities.Shift;
 import nelon.arrive.nelonshift.services.ShiftService;
 import org.springframework.http.HttpStatus;
