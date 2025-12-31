@@ -1,8 +1,9 @@
 package nelon.arrive.nelonshift.services.interfaces;
 
 import nelon.arrive.nelonshift.dto.ProjectDto;
-import nelon.arrive.nelonshift.entity.Project;
-import nelon.arrive.nelonshift.entity.Project.ProjectStatus;
+import nelon.arrive.nelonshift.enums.ProjectStatus;
+import nelon.arrive.nelonshift.request.CreateProjectRequest;
+import nelon.arrive.nelonshift.request.UpdateProjectRequest;
 import nelon.arrive.nelonshift.response.PageResponse;
 
 import java.time.LocalDate;
@@ -21,9 +22,9 @@ public interface IProjectService {
 	
 	ProjectDto getProjectById(Long id);
 	
-	ProjectDto createProject(Project project);
+	ProjectDto createProject(CreateProjectRequest project);
 	
-	ProjectDto updateProject(Long id, Project projectDetails);
+	ProjectDto updateProject(Long id, UpdateProjectRequest projectDetails);
 	
 	void deleteProject(Long id);
 }

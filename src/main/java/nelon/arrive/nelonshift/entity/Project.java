@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nelon.arrive.nelonshift.enums.ProjectStatus;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -55,11 +56,4 @@ public class Project {
 	@UpdateTimestamp
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
-	
-	public enum ProjectStatus {
-		ACTIVE,
-		COMPLETED,
-		PAUSED,
-		CANCELLED
-	}
 }

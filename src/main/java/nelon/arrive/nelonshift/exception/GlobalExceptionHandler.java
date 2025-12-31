@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +19,49 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 	
 	/**
-	 * Обработка наших кастомных исключений (ResourceNotFoundException, AlreadyExistsException и т.д.)
+	 * Обработка ResourceNotFoundException
+	 */
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+		ResourceNotFoundException ex,
+		HttpServletRequest request
+	) {
+		log.error("Resource Not Found: {}", ex.getMessage());
+		
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.timestamp(LocalDateTime.now())
+			.status(HttpStatus.NOT_FOUND.value())
+			.error(HttpStatus.NOT_FOUND.getReasonPhrase())
+			.message(ex.getMessage())
+			.path(request.getRequestURI())
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+	}
+	
+	/**
+	 * Обработка AlreadyExistsException
+	 */
+	@ExceptionHandler(AlreadyExistsException.class)
+	public ResponseEntity<ErrorResponse> handleAlreadyExistsException(
+		AlreadyExistsException ex,
+		HttpServletRequest request
+	) {
+		log.error("Resource Already Exists: {}", ex.getMessage());
+		
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.timestamp(LocalDateTime.now())
+			.status(HttpStatus.CONFLICT.value())
+			.error(HttpStatus.CONFLICT.getReasonPhrase())
+			.message(ex.getMessage())
+			.path(request.getRequestURI())
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+	}
+	
+	/**
+	 * Обработка кастомных API исключений с настраиваемым статусом
 	 */
 	@ExceptionHandler(ApiException.class)
 	public ResponseEntity<ErrorResponse> handleApiException(
@@ -61,8 +104,7 @@ public class GlobalExceptionHandler {
 	}
 	
 	/**
-	 * Обработка ошибок валидации Spring (@Valid в контроллерах)
-	 * Автоматически срабатывает когда @NotNull, @Size и т.д. не проходят
+	 * Обработка ошибок валидации Spring (@Valid)
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
@@ -91,8 +133,28 @@ public class GlobalExceptionHandler {
 	}
 	
 	/**
+	 * Обработка AccessDeniedException (403)
+	 */
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+		AccessDeniedException ex,
+		HttpServletRequest request
+	) {
+		log.error("Access Denied: {}", ex.getMessage());
+		
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.timestamp(LocalDateTime.now())
+			.status(HttpStatus.FORBIDDEN.value())
+			.error(HttpStatus.FORBIDDEN.getReasonPhrase())
+			.message("Access denied")
+			.path(request.getRequestURI())
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+	}
+	
+	/**
 	 * Обработка всех остальных непредвиденных исключений
-	 * Например: NullPointerException, IllegalArgumentException и т.д.
 	 */
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGlobalException(

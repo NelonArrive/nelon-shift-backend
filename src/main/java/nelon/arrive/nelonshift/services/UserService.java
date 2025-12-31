@@ -2,18 +2,19 @@ package nelon.arrive.nelonshift.services;
 
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import nelon.arrive.nelonshift.dto.UserDto;
 import nelon.arrive.nelonshift.entity.User;
-import nelon.arrive.nelonshift.exception.AlreadyExistsException;
 import nelon.arrive.nelonshift.exception.ResourceNotFoundException;
+import nelon.arrive.nelonshift.mappers.UserMapper;
 import nelon.arrive.nelonshift.repository.UserRepository;
-import nelon.arrive.nelonshift.request.CreateUserRequest;
 import nelon.arrive.nelonshift.request.UpdateUserRequest;
 import nelon.arrive.nelonshift.services.interfaces.IUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -21,34 +22,30 @@ import java.util.UUID;
 public class UserService implements IUserService {
 	
 	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
+	private final UserMapper userMapper;
 	
 	@Override
-	public User getUserById(UUID userId) {
-		return userRepository.findById(userId)
+	@Transactional(readOnly = true)
+	public List<UserDto> getAllUsers() {
+		List<User> users = userRepository.findAll();
+		return userMapper.toDtoList(users);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public UserDto getUserById(UUID userId) {
+		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+		return userMapper.toDto(user);
 	}
 	
 	@Override
-	public User createUser(CreateUserRequest request) {
-		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new AlreadyExistsException("Email already exists");
-		}
-		
-		User user = new User();
-		user.setEmail(request.getEmail());
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
-		user.setName(request.getName());
-		
-		return userRepository.save(user);
-	}
-	
-	@Override
-	public User updateUser(UpdateUserRequest request, UUID userId) {
-		return userRepository.findById(userId).map(exisingUser -> {
+	public UserDto updateUser(UpdateUserRequest request, UUID userId) {
+		User user = userRepository.findById(userId).map(exisingUser -> {
 			exisingUser.setName(request.getName());
 			return userRepository.save(exisingUser);
 		}).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+		return userMapper.toDto(user);
 	}
 	
 	@Override

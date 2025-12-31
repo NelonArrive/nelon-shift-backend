@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import nelon.arrive.nelonshift.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -19,6 +20,16 @@ public class CustomUserDetails implements UserDetails {
 	private UUID id;
 	private String email;
 	private String password;
+	private String name;
+	
+	public static CustomUserDetails build(User user) {
+		return new CustomUserDetails(
+			user.getId(),
+			user.getEmail(),
+			user.getPassword(),
+			user.getName()
+		);
+	}
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

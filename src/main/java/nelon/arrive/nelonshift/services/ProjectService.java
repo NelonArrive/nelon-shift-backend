@@ -4,14 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nelon.arrive.nelonshift.dto.ProjectDto;
 import nelon.arrive.nelonshift.entity.Project;
-import nelon.arrive.nelonshift.entity.Project.ProjectStatus;
-import nelon.arrive.nelonshift.exception.AlreadyExistsException;
+import nelon.arrive.nelonshift.entity.User;
+import nelon.arrive.nelonshift.enums.ProjectStatus;
 import nelon.arrive.nelonshift.exception.BadRequestException;
 import nelon.arrive.nelonshift.exception.BusinessLogicException;
 import nelon.arrive.nelonshift.exception.ResourceNotFoundException;
+import nelon.arrive.nelonshift.mappers.ProjectMapper;
 import nelon.arrive.nelonshift.repository.ProjectRepository;
+import nelon.arrive.nelonshift.request.CreateProjectRequest;
+import nelon.arrive.nelonshift.request.UpdateProjectRequest;
 import nelon.arrive.nelonshift.response.PageResponse;
 import nelon.arrive.nelonshift.services.interfaces.IProjectService;
+import nelon.arrive.nelonshift.services.interfaces.IUserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,16 +31,17 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ProjectService implements IProjectService {
-	private final ProjectRepository projectRepository;
 	
-	private static final int MIN_PAGE_SIZE = 1;
-	private static final int MAX_PAGE_SIZE = 100;
-	private static final int MIN_NAME_LENGTH = 2;
+	private final ProjectRepository projectRepository;
+	private final IUserService userService;
+	private final ProjectMapper projectMapper;
+	
 	private static final int MAX_NAME_LENGTH = 100;
 	private static final List<String> VALID_SORT_FIELDS = Arrays.asList(
 		"id", "name", "status", "startDate", "endDate", "createdAt", "updatedAt"
 	);
 	
+	@Override
 	@Transactional(readOnly = true)
 	public PageResponse<ProjectDto> getProjects(
 		String name,
@@ -48,7 +53,6 @@ public class ProjectService implements IProjectService {
 		String sortBy,
 		String sortDirection
 	) {
-		validatePagination(page, size);
 		validateSorting(sortBy, sortDirection);
 		
 		if (name != null && name.trim().length() > MAX_NAME_LENGTH) {
@@ -77,159 +81,73 @@ public class ProjectService implements IProjectService {
 			name, status, startDate, endDate, pageable
 		);
 		
-		Page<ProjectDto> dtoPage = projectPage.map(ProjectDto::new);
-		return new PageResponse<>(dtoPage);
+		Page<ProjectDto> projectDtoPage = projectPage.map(projectMapper::toDto);
+		return new PageResponse<>(projectDtoPage);
 	}
 	
+	@Override
 	@Transactional(readOnly = true)
 	public ProjectDto getProjectById(Long id) {
 		Project project = projectRepository.findById(id)
-			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
-		return new ProjectDto(project);
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+		return projectMapper.toDto(project);
 	}
 	
-	@Transactional
-	public ProjectDto createProject(Project project) {
-		if (project == null) {
-			throw new BadRequestException("Project data is required");
+	@Override
+	public ProjectDto createProject(CreateProjectRequest request) {
+		User user = userService.getAuthenticatedUser();
+		
+		validateProjectDates(request.getStartDate(), request.getEndDate());
+		
+		if (request.getStartDate() != null && request.getStartDate().isBefore(LocalDate.now())) {
+			log.warn("Creating project with start date in the past: {}", request.getStartDate());
 		}
 		
-		validateProjectName(project.getName());
-		
-		if (projectRepository.existsByName(project.getName().trim())) {
-			throw new AlreadyExistsException("Project with name '" + project.getName() + "' already exists");
-		}
-		
-		if (project.getStatus() == null) {
-			throw new BadRequestException("Project status is required");
-		}
-		
-		validateProjectDates(project.getStartDate(), project.getEndDate());
-		
-		if (project.getStatus() == ProjectStatus.COMPLETED) {
-			throw new BusinessLogicException("Cannot create a project with COMPLETED status");
-		}
-		
-		if (project.getStartDate() != null && project.getStartDate().isBefore(LocalDate.now())) {
-			log.warn("Creating project with start date in the past: {}", project.getStartDate());
-		}
+		Project project = new Project();
+		project.setName(request.getName());
+		project.setStatus(request.getStatus());
+		project.setStartDate(request.getStartDate());
+		project.setEndDate(request.getEndDate());
+		project.setUser(user);
 		
 		Project savedProject = projectRepository.save(project);
-		log.info("Created project with id: {} and name: '{}'", savedProject.getId(), savedProject.getName());
 		
-		return new ProjectDto(savedProject);
+		log.info("Created project with id: {} and name: '{}'", project.getId(), project.getName());
+		
+		return projectMapper.toDto(savedProject);
 	}
 	
-	@Transactional
-	public ProjectDto updateProject(Long id, Project projectDetails) {
-		validateProjectId(id);
-		
-		if (projectDetails == null) {
-			throw new BadRequestException("Project update data is required");
-		}
-		
+	@Override
+	public ProjectDto updateProject(Long id, UpdateProjectRequest request) {
 		Project project = projectRepository.findById(id)
-			.orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 		
-		// Сохраняем старые значения для логирования
-		String oldName = project.getName();
-		ProjectStatus oldStatus = project.getStatus();
-		
-		if (projectDetails.getName() != null) {
-			validateProjectName(projectDetails.getName());
-			
-			// Проверка уникальности имени (если меняется)
-			if (!project.getName().equals(projectDetails.getName().trim())) {
-				if (projectRepository.existsByName(projectDetails.getName().trim())) {
-					throw new AlreadyExistsException("Project with name '" + projectDetails.getName() + "' already exists");
-				}
-				project.setName(projectDetails.getName().trim());
-			}
-		}
-		
-		if (projectDetails.getStatus() != null) {
-			validateStatusTransition(
-				project.getStatus(),
-				projectDetails.getStatus(),
-				project
-			);
-			project.setStatus(projectDetails.getStatus());
-		}
-		
-		LocalDate newStartDate = projectDetails.getStartDate() != null ?
-			projectDetails.getStartDate() : project.getStartDate();
-		LocalDate newEndDate = projectDetails.getEndDate() != null ?
-			projectDetails.getEndDate() : project.getEndDate();
+		project.setName(request.getName().trim());
+		project.setStatus(request.getStatus());
+		LocalDate newStartDate = request.getStartDate() != null ?
+			request.getStartDate() : project.getStartDate();
+		LocalDate newEndDate = request.getEndDate() != null ?
+			request.getEndDate() : project.getEndDate();
 		
 		validateProjectDates(newStartDate, newEndDate);
 		
-		if (projectDetails.getStartDate() != null || projectDetails.getEndDate() != null) {
+		if (request.getStartDate() != null || request.getEndDate() != null) {
 			validateDateChangeWithShifts(project, newStartDate, newEndDate);
 		}
 		
-		if (projectDetails.getStartDate() != null) {
-			project.setStartDate(projectDetails.getStartDate());
-		}
-		if (projectDetails.getEndDate() != null) {
-			project.setEndDate(projectDetails.getEndDate());
-		}
+		project.setStartDate(request.getStartDate());
+		project.setEndDate(request.getEndDate());
 		
 		Project updatedProject = projectRepository.save(project);
-		log.info(
-			"Updated project id: {}. Name: '{}' -> '{}', Status: {} -> {}",
-			id, oldName, updatedProject.getName(), oldStatus,
-			updatedProject.getStatus()
-		);
-		
-		return new ProjectDto(updatedProject);
+		return projectMapper.toDto(updatedProject);
 	}
 	
-	@Transactional
 	public void deleteProject(Long id) {
-		Project project = projectRepository.findById(id)
-			.orElseThrow(
-				() -> new ResourceNotFoundException("Project not found with id: " + id));
-		
-		if (!project.getShifts().isEmpty()) {
-			throw new BusinessLogicException(
-				"Cannot delete project with " + project.getShifts().size() + " existing shifts. Delete shifts first."
-			);
-		}
-		
-		if (project.getStatus() == ProjectStatus.COMPLETED) {
-			throw new BusinessLogicException("Cannot delete completed project. Change status first.");
-		}
-		
 		projectRepository.deleteById(id);
-		log.info("Deleted project with id: {} and name: '{}'", id, project.getName());
+		log.info("Deleted project with id: {}", id);
 	}
 	
 	// ===== ПРИВАТНЫЕ МЕТОДЫ ВАЛИДАЦИИ =====
-	
-	private void validateProjectId(Long id) {
-		if (id == null || id <= 0) {
-			throw new BadRequestException("Project ID must be a positive number");
-		}
-	}
-	
-	private void validateProjectName(String name) {
-		if (name == null || name.trim().isEmpty()) {
-			throw new BadRequestException("Project name cannot be empty");
-		}
-		
-		String trimmedName = name.trim();
-		if (trimmedName.length() < MIN_NAME_LENGTH) {
-			throw new BadRequestException("Project name must be at least " + MIN_NAME_LENGTH + " characters");
-		}
-		
-		if (trimmedName.length() > MAX_NAME_LENGTH) {
-			throw new BadRequestException("Project name cannot exceed " + MAX_NAME_LENGTH + " characters");
-		}
-		
-		if (trimmedName.matches(".*[<>\"'].*")) {
-			throw new BadRequestException("Project name contains invalid characters");
-		}
-	}
 	
 	private void validateProjectDates(LocalDate startDate, LocalDate endDate) {
 		if (startDate != null && endDate != null) {
@@ -251,16 +169,6 @@ public class ProjectService implements IProjectService {
 		}
 	}
 	
-	private void validatePagination(int page, int size) {
-		if (page < 0) {
-			throw new BadRequestException("Page number cannot be negative");
-		}
-		
-		if (size < MIN_PAGE_SIZE || size > MAX_PAGE_SIZE) {
-			throw new BadRequestException("Page size must be between " + MIN_PAGE_SIZE + " and " + MAX_PAGE_SIZE);
-		}
-	}
-	
 	private void validateSorting(String sortBy, String sortDirection) {
 		if (sortBy == null || sortBy.trim().isEmpty()) {
 			throw new BadRequestException("Sort field cannot be empty");
@@ -277,24 +185,6 @@ public class ProjectService implements IProjectService {
 		
 		if (!sortDirection.equalsIgnoreCase("asc") && !sortDirection.equalsIgnoreCase("desc")) {
 			throw new BadRequestException("Sort direction must be 'asc' or 'desc'");
-		}
-	}
-	
-	private void validateStatusTransition(ProjectStatus currentStatus, ProjectStatus newStatus, Project project) {
-		if (currentStatus == ProjectStatus.CANCELLED && newStatus != ProjectStatus.ACTIVE) {
-			throw new BusinessLogicException("Cancelled project can only be changed to ACTIVE status");
-		}
-		
-		if (currentStatus == ProjectStatus.COMPLETED) {
-			throw new BusinessLogicException("Cannot change status of completed project");
-		}
-		
-		if (newStatus == ProjectStatus.COMPLETED && project.getShifts().isEmpty()) {
-			throw new BusinessLogicException("Cannot complete project without any shifts");
-		}
-		
-		if (newStatus == ProjectStatus.COMPLETED && currentStatus != ProjectStatus.ACTIVE) {
-			throw new BusinessLogicException("Only ACTIVE projects can be marked as COMPLETED");
 		}
 	}
 	

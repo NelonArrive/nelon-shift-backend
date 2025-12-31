@@ -1,19 +1,21 @@
 package nelon.arrive.nelonshift.services.interfaces;
 
+import nelon.arrive.nelonshift.dto.UserDto;
 import nelon.arrive.nelonshift.entity.User;
-import nelon.arrive.nelonshift.request.CreateUserRequest;
 import nelon.arrive.nelonshift.request.UpdateUserRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface IUserService {
-	User getUserById(UUID userId);
+	List<UserDto> getAllUsers();
 	
-	User createUser(CreateUserRequest request);
+	UserDto getUserById(UUID userId);
 	
-	User updateUser(UpdateUserRequest request, UUID userId);
+	UserDto updateUser(UpdateUserRequest request, UUID userId);
 	
 	void deleteUser(UUID userId);
 	
 	User getAuthenticatedUser();
+	
 }

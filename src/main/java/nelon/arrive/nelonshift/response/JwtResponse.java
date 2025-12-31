@@ -11,18 +11,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtResponse {
-	private String token;
-	private String type = "Bearer";
 	private UUID id;
-	private String email;
-	private String name;
-	private Set<String> roles;
-	
-	public JwtResponse(String token, UUID id, String email, String name, Set<String> roles) {
-		this.token = token;
-		this.id = id;
-		this.email = email;
-		this.name = name;
-		this.roles = roles;
-	}
+	private String token;
 }
