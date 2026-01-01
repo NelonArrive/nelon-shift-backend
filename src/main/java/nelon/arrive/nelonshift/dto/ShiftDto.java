@@ -10,8 +10,6 @@ import java.time.LocalTime;
 @Data
 public class ShiftDto {
 	private Long id;
-	private Long projectId;
-	private String projectName;
 	private LocalDate date;
 	private LocalTime startTime;
 	private LocalTime endTime;

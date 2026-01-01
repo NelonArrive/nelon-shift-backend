@@ -2,9 +2,9 @@ package nelon.arrive.nelonshift.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nelon.arrive.nelonshift.dto.ShiftDto;
 import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Shift;
-import nelon.arrive.nelonshift.entity.User;
 import nelon.arrive.nelonshift.exception.AlreadyExistsException;
 import nelon.arrive.nelonshift.exception.BadRequestException;
 import nelon.arrive.nelonshift.exception.ResourceNotFoundException;
@@ -31,18 +31,20 @@ public class ShiftService implements IShiftService {
 	private final ShiftRepository shiftRepository;
 	private final ProjectRepository projectRepository;
 	private final ShiftMapper shiftMapper;
-
+	
 	@Override
 	@Transactional(readOnly = true)
-	public List<Shift> getShiftsByProjectId(Long projectId) {
+	public List<ShiftDto> getShiftsByProjectId(Long projectId) {
 		if (!projectRepository.existsById(projectId)) {
 			throw new ResourceNotFoundException("Project not found");
 		}
-		return shiftRepository.findByProjectId(projectId);
+		
+		List<Shift> shifts = shiftRepository.findByProjectId(projectId);
+		return shiftMapper.toDtoList(shifts);
 	}
 	
 	@Override
-	public Shift createShift(Long projectId, CreateShiftRequest request) {
+	public ShiftDto createShift(Long projectId, CreateShiftRequest request) {
 		validateShiftCreate(request);
 		
 		Project project = projectRepository.findById(projectId)
@@ -54,15 +56,25 @@ public class ShiftService implements IShiftService {
 			throw new AlreadyExistsException("Shift already exists for this project on date: " + request.getDate());
 		}
 		
-		Shift shift = shiftMapper.toEntity(request, project);
+		Shift shift = new Shift();
+		shift.setDate(request.getDate());
+		shift.setStartTime(request.getStartTime());
+		shift.setEndTime(request.getEndTime());
+		shift.setHours(request.getHours());
+		shift.setBasePay(request.getBasePay());
+		shift.setOvertimeHours(request.getOvertimeHours());
+		shift.setOvertimePay(request.getOvertimePay());
+		shift.setPerDiem(request.getPerDiem());
+		shift.setProject(project);
+		
 		Shift savedShift = shiftRepository.save(shift);
 		log.info("Created shift with id: {} for project: {}", savedShift.getId(), projectId);
 		
-		return savedShift;
+		return shiftMapper.toDto(savedShift);
 	}
 	
 	@Override
-	public Shift updateShift(Long id, UpdateShiftRequest shiftDetails) {
+	public ShiftDto updateShift(Long id, UpdateShiftRequest shiftDetails) {
 		validateShiftUpdate(shiftDetails);
 		
 		Shift shift = shiftRepository.findById(id)
@@ -76,22 +88,26 @@ public class ShiftService implements IShiftService {
 			shift.setDate(shiftDetails.getDate());
 		}
 		
-		if (shiftDetails.getStartTime() != null) shift.setStartTime(shiftDetails.getStartTime());
-		if (shiftDetails.getEndTime() != null) shift.setEndTime(shiftDetails.getEndTime());
-		if (shiftDetails.getHours() != null) shift.setHours(shiftDetails.getHours());
-		if (shiftDetails.getBasePay() != null) shift.setBasePay(shiftDetails.getBasePay());
-		if (shiftDetails.getOvertimeHours() != null) shift.setOvertimeHours(shiftDetails.getOvertimeHours());
-		if (shiftDetails.getOvertimePay() != null) shift.setOvertimePay(shiftDetails.getOvertimePay());
-		if (shiftDetails.getPerDiem() != null) shift.setPerDiem(shiftDetails.getPerDiem());
+		shift.setStartTime(shiftDetails.getStartTime());
+		shift.setEndTime(shiftDetails.getEndTime());
+		shift.setHours(shiftDetails.getHours());
+		shift.setBasePay(shiftDetails.getBasePay());
+		shift.setOvertimeHours(shiftDetails.getOvertimeHours());
+		shift.setOvertimePay(shiftDetails.getOvertimePay());
+		shift.setPerDiem(shiftDetails.getPerDiem());
 		
 		Shift updatedShift = shiftRepository.save(shift);
 		log.info("Updated shift with id: {}", id);
 		
-		return updatedShift;
+		return shiftMapper.toDto(updatedShift);
 	}
 	
 	@Override
 	public void deleteShift(Long id) {
+		if (!shiftRepository.existsById(id)) {
+			throw new ResourceNotFoundException("Shift not found with id: " + id);
+		}
+		
 		shiftRepository.deleteById(id);
 		log.info("Deleted shift with id: {}", id);
 	}

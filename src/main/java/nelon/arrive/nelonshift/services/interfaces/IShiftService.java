@@ -1,5 +1,6 @@
 package nelon.arrive.nelonshift.services.interfaces;
 
+import nelon.arrive.nelonshift.dto.ShiftDto;
 import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Shift;
 import nelon.arrive.nelonshift.request.CreateShiftRequest;
@@ -10,11 +11,11 @@ import java.time.LocalTime;
 import java.util.List;
 
 public interface IShiftService {
-	List<Shift> getShiftsByProjectId(Long projectId);
+	List<ShiftDto> getShiftsByProjectId(Long projectId);
 	
-	Shift createShift(Long projectId, CreateShiftRequest shift);
+	ShiftDto createShift(Long projectId, CreateShiftRequest shift);
 	
-	Shift updateShift(Long id, UpdateShiftRequest shiftDetails);
+	ShiftDto updateShift(Long id, UpdateShiftRequest shiftDetails);
 	
 	void deleteShift(Long id);
 	

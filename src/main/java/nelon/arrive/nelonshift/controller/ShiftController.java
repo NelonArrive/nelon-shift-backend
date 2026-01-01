@@ -23,12 +23,10 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class ShiftController {
 	
 	private final ShiftService shiftService;
-	private final ShiftMapper shiftMapper;
 	
 	@GetMapping
 	public ResponseEntity<ApiResponse> getShifts(@RequestParam() Long projectId) {
-		List<Shift> shifts = shiftService.getShiftsByProjectId(projectId);
-		List<ShiftDto> shiftDtos = shiftMapper.toDtoList(shifts);
+		List<ShiftDto> shiftDtos = shiftService.getShiftsByProjectId(projectId);
 		return ResponseEntity.ok(new ApiResponse("Success", shiftDtos));
 	}
 	
@@ -37,8 +35,7 @@ public class ShiftController {
 		@RequestParam Long projectId,
 		@RequestBody CreateShiftRequest request
 	) {
-		Shift shift = shiftService.createShift(projectId, request);
-		ShiftDto shiftDto = shiftMapper.toShiftDto(shift);
+		ShiftDto shiftDto = shiftService.createShift(projectId, request);
 		return ResponseEntity.status(CREATED).body(new ApiResponse("Create shift successfully", shiftDto));
 	}
 	
@@ -47,8 +44,7 @@ public class ShiftController {
 		@PathVariable Long id,
 		@RequestBody UpdateShiftRequest request
 	) {
-		Shift shift = shiftService.updateShift(id, request);
-		ShiftDto shiftDto = shiftMapper.toShiftDto(shift);
+		ShiftDto shiftDto = shiftService.updateShift(id, request);
 		return ResponseEntity.ok(new ApiResponse("Update shift successfully", shiftDto));
 	}
 	

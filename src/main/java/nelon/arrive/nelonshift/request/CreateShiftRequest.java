@@ -28,17 +28,16 @@ public class CreateShiftRequest {
 	@Max(value = 24, message = "Hours cannot exceed 24")
 	private Integer hours;
 	
-	@DecimalMin(value = "0.0", inclusive = true, message = "Base pay must be positive")
+	@DecimalMin(value = "0.0", message = "Base pay must be positive")
 	private BigDecimal basePay;
 	
 	@Min(value = 0, message = "Overtime hours must be at least 0")
 	private Integer overtimeHours;
 	
-	@DecimalMin(value = "0.0", inclusive = true, message = "Overtime pay must be positive")
+	@DecimalMin(value = "0.0", message = "Overtime pay must be positive")
 	private BigDecimal overtimePay;
 	
-	@DecimalMin(value = "0.0", inclusive = true, message = "Per diem must be positive")
+	@DecimalMin(value = "0.0", message = "Per diem must be positive")
 	private BigDecimal perDiem;
 	
-	private Project project;
 }

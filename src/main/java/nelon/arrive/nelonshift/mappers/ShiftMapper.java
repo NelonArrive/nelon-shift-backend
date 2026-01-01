@@ -5,17 +5,16 @@ import nelon.arrive.nelonshift.entity.Project;
 import nelon.arrive.nelonshift.entity.Shift;
 import nelon.arrive.nelonshift.request.CreateShiftRequest;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ShiftMapper {
 	
-	ShiftDto toShiftDto(Shift shift);
+	ShiftDto toDto(Shift shift);
 	
 	Shift toEntity(ShiftDto shiftDto);
 	
 	List<ShiftDto> toDtoList(List<Shift> shifts);
-	
-	Shift toEntity(CreateShiftRequest request, Project project);
 }

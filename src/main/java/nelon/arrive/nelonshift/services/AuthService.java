@@ -3,6 +3,7 @@ package nelon.arrive.nelonshift.services;
 import lombok.RequiredArgsConstructor;
 import nelon.arrive.nelonshift.entity.User;
 import nelon.arrive.nelonshift.exception.AlreadyExistsException;
+import nelon.arrive.nelonshift.exception.BadRequestException;
 import nelon.arrive.nelonshift.repository.UserRepository;
 import nelon.arrive.nelonshift.request.LoginRequest;
 import nelon.arrive.nelonshift.request.SignupRequest;
@@ -11,8 +12,10 @@ import nelon.arrive.nelonshift.security.jwt.JwtUtils;
 import nelon.arrive.nelonshift.security.user.CustomUserDetails;
 import nelon.arrive.nelonshift.services.interfaces.IAuthService;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,18 +31,22 @@ public class AuthService implements IAuthService {
 	
 	@Override
 	public JwtResponse login(LoginRequest request) {
-		Authentication auth = authenticationManager.authenticate(
-			new UsernamePasswordAuthenticationToken(
-				request.getEmail(),
-				request.getPassword()
-			)
-		);
-		
-		SecurityContextHolder.getContext().setAuthentication(auth);
-		String jwt = jwtUtils.generateTokenForUser(auth);
-		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-		
-		return new JwtResponse(userDetails.getId(), jwt);
+		try {
+			Authentication auth = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(
+					request.getEmail(),
+					request.getPassword()
+				)
+			);
+			
+			SecurityContextHolder.getContext().setAuthentication(auth);
+			String jwt = jwtUtils.generateTokenForUser(auth);
+			CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+			
+			return new JwtResponse(userDetails.getId(), jwt);
+		} catch (BadCredentialsException e) {
+			throw new BadRequestException("Invalid email or password");
+		}
 	}
 	
 	@Override

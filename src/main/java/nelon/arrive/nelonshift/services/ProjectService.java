@@ -95,6 +95,10 @@ public class ProjectService implements IProjectService {
 	
 	@Override
 	public ProjectDto createProject(CreateProjectRequest request) {
+		if (request.getStatus() == ProjectStatus.COMPLETED) {
+			throw new BusinessLogicException("Cannot create a project with COMPLETED status");
+		}
+		
 		User user = userService.getAuthenticatedUser();
 		
 		validateProjectDates(request.getStartDate(), request.getEndDate());
@@ -124,6 +128,7 @@ public class ProjectService implements IProjectService {
 		
 		project.setName(request.getName().trim());
 		project.setStatus(request.getStatus());
+		
 		LocalDate newStartDate = request.getStartDate() != null ?
 			request.getStartDate() : project.getStartDate();
 		LocalDate newEndDate = request.getEndDate() != null ?
@@ -143,6 +148,13 @@ public class ProjectService implements IProjectService {
 	}
 	
 	public void deleteProject(Long id) {
+		Project project = projectRepository.findById(id)
+			.orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+		
+		if (!id.equals(project.getId())) {
+			throw new ResourceNotFoundException("Project not found");
+		}
+		
 		projectRepository.deleteById(id);
 		log.info("Deleted project with id: {}", id);
 	}
